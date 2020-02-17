@@ -6,7 +6,9 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <stdlib.h>
 #include <gmp.h>
+#include <stdio.h>
 #include <vector>
+#include <string.h>
 #include <openssl/evp.h>
 
 using namespace libff;
@@ -27,13 +29,14 @@ void AZTEC::sha3(unsigned char *digest, const unsigned char *message, size_t mes
 }
 
 void AZTEC::encode_G1(unsigned char *packed_data, alt_bn128_G1 &target) {
-    bigint<alt_bn128_q_limbs> x = target.X.as_bigint();
-    bigint<alt_bn128_q_limbs> y = target.Y.as_bigint();
-    bigint<alt_bn128_q_limbs> z = target.Z.as_bigint();
+    alt_bn128_G1 target_copy(target);
+    target_copy.to_affine_coordinates();
+
+    bigint<alt_bn128_q_limbs> x = target_copy.X.as_bigint();
+    bigint<alt_bn128_q_limbs> y = target_copy.Y.as_bigint();
     int q_size = alt_bn128_q_limbs * sizeof(mp_limb_t);
     memcpy(packed_data, (unsigned char *) (x.data), q_size);
     memcpy(packed_data + q_size, (unsigned char *) (y.data), q_size);
-    memcpy(packed_data + 2 * q_size, (unsigned char *) (z.data), q_size);
 }
 
 AZTEC::AZTEC(alt_bn128_G1 &h, int y, int k_max) : h(h), y(y), k_max(k_max), mu(vector<alt_bn128_G1>(k_max + 1)) {
@@ -63,43 +66,44 @@ AZTEC::commitment AZTEC::commit(int k, alt_bn128_Fr &a) {
 
 alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<alt_bn128_G1> &B) {
     // calculate challenge
+
     unsigned char digest[32];
     int n = cmts.size();
-    int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 3;
+    int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
     int message_size = size_of_G1 * 2 * n + sizeof(m) + size_of_G1 * n;
     unsigned char *message = new unsigned char[message_size];
     int start = 0; // record memcpy location
     // fill message
     unsigned char *g1_packed_data = new unsigned char[size_of_G1];
     // hash commitments
-    printf("hash commitments\n");
     for (int i = 0; i < cmts.size(); ++i) {
         alt_bn128_G1 gamma = cmts[i].first;
         alt_bn128_G1 yita = cmts[i].second;
         encode_G1(g1_packed_data, gamma);
-        memcpy(g1_packed_data, message + start,  size_of_G1);
+        memcpy(message + start, g1_packed_data,  size_of_G1);
         encode_G1(g1_packed_data, yita);
-        memcpy(g1_packed_data, message + start + size_of_G1,  size_of_G1);
-        start = i * 2 * size_of_G1;
+        memcpy(message + start + size_of_G1, g1_packed_data,   size_of_G1);
+        start += 2 * size_of_G1;
     }
-    // hash m
-    printf("hash m\n");
+
+
+
     memcpy(message + start, (unsigned char *) &m, sizeof(m));
     start += sizeof(m);
+
     // hash B
-    printf("hash b_\n");
     for (int i = 0; i < n; ++i) {
         encode_G1(g1_packed_data, B[i]);
-        memcpy(g1_packed_data, message + start,  size_of_G1);
+        memcpy(message + start, g1_packed_data,   size_of_G1);
         start += size_of_G1;
     }
-    printf("calculate hash\n");
+
     sha3(digest, message, message_size);
     bigint<alt_bn128_r_limbs> tmp_c;
 
     for(int i=0; i<alt_bn128_r_limbs; ++i) {
-        unsigned long int value = 0;
-        memcpy((unsigned char*)&value, digest+i*sizeof(unsigned long int), sizeof(unsigned long int));
+        mp_limb_t value = 0;
+        memcpy((unsigned char*)&value, digest+i*sizeof(mp_limb_t), sizeof(mp_limb_t));
         tmp_c.data[i] = value;
     }
 
@@ -142,7 +146,6 @@ Proof AZTEC::proof(vector<commitment> &cmts, int m,int  k_public, vector<AZTEC::
         if (i == 0) continue;
         bk[i] = alt_bn128_Fr::random_element();
     }
-    printf("calculate bk1\n");
     // calculate bk1
     alt_bn128_Fr left_part(0);
     alt_bn128_Fr right_part(0);
@@ -160,10 +163,8 @@ Proof AZTEC::proof(vector<commitment> &cmts, int m,int  k_public, vector<AZTEC::
         B[i] = bk[i] * cmts[i].first + ba[i] * h;
     }
 
-    printf("calculate challenge\n");
     alt_bn128_Fr c = calculate_challenge(cmts, m, B);
     // calculate k1_ ... kn_ and a1_ ... an_
-    printf("calculate k_ a_\n");
     vector<alt_bn128_Fr> k_(n - 1);
     vector<alt_bn128_Fr> a_(n);
 
@@ -172,7 +173,7 @@ Proof AZTEC::proof(vector<commitment> &cmts, int m,int  k_public, vector<AZTEC::
         a_[i] = c * ai + ba[i];
         if (i == 0) continue;
         int ki = cmts_source[i].first;
-        k_[i] = c * alt_bn128_Fr(ki) + bk[i];
+        k_[i-1] = c * alt_bn128_Fr(ki) + bk[i];
     }
 
 
@@ -207,7 +208,7 @@ bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
         if (i == 0) {
             B[i] = k1_ * gamma + pi.a_[i] * h + -pi.c * yita;
         } else {
-            B[i] = pi.k_[i] * gamma + pi.a_[i] * h + -pi.c * yita;
+            B[i] = pi.k_[i-1] * gamma + pi.a_[i] * h + -pi.c * yita;
         }
     }
     alt_bn128_Fr c = calculate_challenge(cmts, m, B);

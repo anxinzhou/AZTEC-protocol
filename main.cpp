@@ -8,45 +8,6 @@
 
 using namespace std;
 using namespace libff;
-//template<typename ppT>
-//void pairing_test()
-//{
-//    GT<ppT> GT_one = GT<ppT>::one();
-//
-//    printf("Running bilinearity tests:\n");
-//    G1<ppT> P = (Fr<ppT>::random_element()) * G1<ppT>::one();
-//    //G1<ppT> P = Fr<ppT>("2") * G1<ppT>::one();
-//    G2<ppT> Q = (Fr<ppT>::random_element()) * G2<ppT>::one();
-//    //G2<ppT> Q = Fr<ppT>("3") * G2<ppT>::one();
-//
-//    printf("P:\n");
-//    P.print();
-//    P.print_coordinates();
-//    printf("Q:\n");
-//    Q.print();
-//    Q.print_coordinates();
-//    printf("\n\n");
-//
-//    Fr<ppT> s = Fr<ppT>::random_element();
-//    s.print();
-//    //Fr<ppT> s = Fr<ppT>("2");
-//    G1<ppT> sP = s * P;
-//    G2<ppT> sQ = s * Q;
-//
-//    printf("Pairing bilinearity tests (three must match):\n");
-//    GT<ppT> ans1 = ppT::reduced_pairing(sP, Q);
-//    GT<ppT> ans2 = ppT::reduced_pairing(P, sQ);
-//    GT<ppT> ans3 = ppT::reduced_pairing(P, Q)^s;
-//    ans1.print();
-//    ans2.print();
-//    ans3.print();
-//    assert(ans1 == ans2);
-//    assert(ans2 == ans3);
-//
-//    assert(ans1 != GT_one);
-//    assert((ans1^Fr<ppT>::field_char()) == GT_one);
-//    printf("\n\n");
-//}
 
 int main() {
     alt_bn128_pp::init_public_params();
@@ -71,14 +32,16 @@ int main() {
         cmts_source[i] = AZTEC::commitment_source(k,a);
         cmts[i] = aztec.commit(k,a);
     }
-    printf("generate proof\n");
-    Proof pi = aztec.proof(cmts, m, k_public, cmts_source);
-    printf("verify proof\n");
-    bool result = aztec.verify(cmts, m, k_public, pi);
-    if (result) {
-        printf("verify success");
-    } else {
-        printf("verify fail");
+    for(int i=0;i<100;i++) {
+        Proof pi = aztec.proof(cmts, m, k_public, cmts_source);
+        bool result = aztec.verify(cmts, m, k_public, pi);
+        if (result) {
+//            printf("verify success %d\n",i);
+        } else {
+            printf("verify fail %d",i);
+            exit(-1);
+        }
     }
+    cout<<"pass test"<<endl;
     return 0;
 }
