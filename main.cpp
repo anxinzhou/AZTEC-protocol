@@ -52,7 +52,7 @@ int main() {
 //    }
 
     for(int i=0;i<1;i++) {
-        Proof pi = aztec.proof(cmts, m, k_public, cmts_source);
+        ProofBalance pi = aztec.proof(cmts, m, k_public, cmts_source);
         ContractVerifyContent content (pi,cmts,m,k_public);
         cout<<(content.serialize())<<endl;
 

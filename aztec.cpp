@@ -183,7 +183,7 @@ alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<
     return c;
 }
 
-Proof AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source) {
+ProofBalance AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source) {
     // check validity of R balance
     int n = cmts.size();
     if (m > n || n == 0) {
@@ -251,10 +251,10 @@ Proof AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::
     }
 
 
-    return Proof(c, a_, k_);
+    return ProofBalance(c, a_, k_);
 }
 
-bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
+bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, ProofBalance &pi) {
     int n = cmts.size();
     if (!(m >= 0 && m <= n)) {
         printf("wrong size of m");
