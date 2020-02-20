@@ -11,8 +11,6 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <iomanip>
-#include <boost/lexical_cast.hpp>
-#include <ethash/keccak.hpp>
 #include <gmp.h>
 
 using namespace libff;
