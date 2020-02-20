@@ -13,14 +13,15 @@
 using namespace libff;
 using namespace std;
 
-class ProofBalance {
+class Proof {
 public:
     alt_bn128_Fr c;
     vector<alt_bn128_Fr> a_;
     vector<alt_bn128_Fr> k_;
 
-    ProofBalance(alt_bn128_Fr c, vector<alt_bn128_Fr> &a_, vector<alt_bn128_Fr> &k_) : c(c), a_(a_), k_(k_) {};
+    Proof(alt_bn128_Fr c, vector<alt_bn128_Fr> &a_, vector<alt_bn128_Fr> &k_) : c(c), a_(a_), k_(k_) {};
 };
+
 
 class AZTEC {
 public:
@@ -50,13 +51,14 @@ public:
 
     commitment commit(int k, alt_bn128_Fr &a);
 
-    ProofBalance proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source);
+    Proof proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source);
 
-    bool verify(vector<commitment> &cmts, int m, int k_public, ProofBalance &pi);
+    bool verify(vector<commitment> &cmts, int m, int k_public, Proof &pi);
+
 
     alt_bn128_Fr calculate_challenge(vector<commitment> &cmts, int m, vector<alt_bn128_G1> &B);
 
-    void sha3(unsigned char *digest, unsigned char *message, size_t message_len);
+    void sha256(unsigned char *digest, unsigned char *message, size_t message_len);
 
     void encode_G1(unsigned char *packed_data, alt_bn128_G1 &target);
 
@@ -85,16 +87,15 @@ public:
 
 class ContractVerifyContent {
 public:
-    ProofBalance pi;
+    Proof pi;
     vector<AZTEC::commitment> cmts;
     int m;
     int k_public;
 
-    ContractVerifyContent(ProofBalance &pi, vector<AZTEC::commitment> &cmts, int m, int k_public) : pi(pi), cmts(cmts), m(m),
+    ContractVerifyContent(Proof &pi, vector<AZTEC::commitment> &cmts, int m, int k_public) : pi(pi), cmts(cmts), m(m),
                                                                                              k_public(k_public) {};
     ContractVerifySerializeOBJ serialize ();
 };
 
 #endif //ANONYMOUS_PAYMENT_AZTEC_H
 
-bytes memeory input = new bytes

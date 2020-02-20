@@ -20,7 +20,7 @@ using namespace std;
 
 //const alt_bn128_Fr AZTEC::p = alt_bn128_modulus_r;
 
-void AZTEC::sha3(unsigned char *digest, unsigned char *message, size_t message_len) {
+void AZTEC::sha256(unsigned char *digest, unsigned char *message, size_t message_len) {
     unsigned int SHALEN = 32;
     EVP_MD_CTX *mdctx;
     mdctx = EVP_MD_CTX_create();
@@ -37,36 +37,20 @@ void AZTEC::encode_G1(unsigned char *packed_data, alt_bn128_G1 &target) {
     alt_bn128_G1 target_copy(target);
     target_copy.to_affine_coordinates();
 
-//    bigint<alt_bn128_q_limbs> x = target_copy.X.as_bigint();
-//    bigint<alt_bn128_q_limbs> y = target_copy.Y.as_bigint();
-//
-//    int q_size = alt_bn128_q_limbs * sizeof(mp_limb_t);
-
     int g_size = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
     string s_x = serializeG1(target_copy);
-    int step = sizeof(unsigned int) *2;
-//    cout<<"s_x:"<<s_x<<endl;
-//    cout<<"x"<<endl;
-    for(int i=0; i < s_x.size()/step; i+=1) {
+    int step = sizeof(unsigned int) * 2;
+    for (int i = 0; i < s_x.size() / step; i += 1) {
         //clear x;
         unsigned int x;
         std::stringstream ss;
-        ss << std::hex << s_x.substr(i*step, step);
+        ss << std::hex << s_x.substr(i * step, step);
         ss >> x;
 //        cout<<x<<" ";
-        memcpy(packed_data+i*step/2,(unsigned char*)(&x),step/2);
-        reverse(packed_data+i*step/2, packed_data+i*step/2+step/2);
-        cout<<std::dec;
+        memcpy(packed_data + i * step / 2, (unsigned char *) (&x), step / 2);
+        reverse(packed_data + i * step / 2, packed_data + i * step / 2 + step / 2);
+        cout << std::dec;
     }
-//    cout<<endl;
-//    for(int i=0;i<s_x.size()/2;i++) {
-//        cout<<std::hex<<int(packed_data[i]);
-//    }
-//    cout<<endl;
-//    cout<<packed_data<<endl;
-//
-//    memcpy(packed_data, (unsigned char *) (x.data), q_size);
-//    memcpy(packed_data + q_size, (unsigned char *) (y.data), q_size);
 }
 
 void AZTEC::encode_Fr(unsigned char *packed_data, alt_bn128_Fr &target) {
@@ -101,81 +85,49 @@ AZTEC::commitment AZTEC::commit(int k, alt_bn128_Fr &a) {
 }
 
 alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<alt_bn128_G1> &B) {
-    // calculate challenge
-//    string message;
-//    int n = cmts.size();
-//    for (int i = 0; i < n; ++i) {
-//        alt_bn128_G1 gamma = cmts[i].first;
-//        alt_bn128_G1 yita = cmts[i].second;
-//        message+= serializeG1(gamma);
-//        message+= serializeG1(yita);
-//    }
-//    message+=string(32-sizeof(m),0);
-//    message+= string((const char *)&m,sizeof(m));
-//    for (int i = 0; i < n; ++i) {
-//        message+=serializeG1(B[i]);
-//    }
-//
-
-//    int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
-//    unsigned char digest[32];
-//    int message_size = size_of_G1 * 2 * n + 32 + size_of_G1 * n;
-//    const char* message_tmp = message.c_str();
-
     int n = cmts.size();
     unsigned char digest[32];
     int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
     int message_size = size_of_G1 * 2 * n + 32 + size_of_G1 * n;
-    cout<<"message size: "<<message_size<<endl;
+    cout << "message size: " << message_size << endl;
     unsigned char *message = new unsigned char[message_size];
 
     int start = 0; // record memcpy location
     // hash commitments
     for (int i = 0; i < cmts.size(); ++i) {
         alt_bn128_G1 gamma = cmts[i].first;
-        encode_G1(message+start, gamma);
+        encode_G1(message + start, gamma);
         alt_bn128_G1 yita = cmts[i].second;
-        encode_G1(message+start+size_of_G1, yita);
+        encode_G1(message + start + size_of_G1, yita);
         start += 2 * size_of_G1;
     }
 
-    string padded(32-sizeof(m),0);
-    const char * padded_cstr = padded.c_str();
-    memcpy(message + start, (unsigned char *) padded_cstr, 32-sizeof(m));
-    start += 32-sizeof(m);
+    string padded(32 - sizeof(m), 0);
+    const char *padded_cstr = padded.c_str();
+    memcpy(message + start, (unsigned char *) padded_cstr, 32 - sizeof(m));
+    start += 32 - sizeof(m);
 
     memcpy(message + start, (unsigned char *) &m, sizeof(m));
-    reverse(message+start,message+start+sizeof(m));
+    reverse(message + start, message + start + sizeof(m));
     start += sizeof(m);
 
     // hash B
     for (int i = 0; i < n; ++i) {
-        encode_G1(message+start, B[i]);
+        encode_G1(message + start, B[i]);
         start += size_of_G1;
     }
 
-    //test
-    cout<<"message"<<endl;
-//    for(int i=message_size-1;i>=0;i-=1) {
-//        cout<<std::hex<<int(message[i]);
-//    }
 
-//    reverse(message, message+message_size);
-    sha3(digest, message, message_size);
+    sha256(digest, message, message_size);
     string challenge;
-    for(int i=0;i<32;i++) {
+    for (int i = 0; i < 32; i++) {
         std::stringstream ss;
-        ss << setfill('0')<<setw(2)<<std::hex << int(digest[i]);
-        string result( ss.str() );
+        ss << setfill('0') << setw(2) << std::hex << int(digest[i]);
+        string result(ss.str());
         challenge += result;
-        cout<<std::dec;
     }
-    cout<<"pre challenge:"<<challenge<<endl;
-    for(int i=0;i<message_size;i+=1) {
-        cout<<setfill ('0')<<setw(2)<<std::hex<<int(message[i]);
-        cout<<std::dec;
-    }
-    cout<<endl;
+    cout << std::dec;
+
     mpz_t c_mpz;
     mpz_init_set_str(c_mpz, challenge.c_str(), 16);
     alt_bn128_Fr c = alt_bn128_Fr(c_mpz);
@@ -183,7 +135,7 @@ alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<
     return c;
 }
 
-ProofBalance AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source) {
+Proof AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source) {
     // check validity of R balance
     int n = cmts.size();
     if (m > n || n == 0) {
@@ -214,11 +166,11 @@ ProofBalance AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<
 
     for (int i = 0; i < n; ++i) {
         //use non-random for debug
-//        ba[i] = alt_bn128_Fr::random_element();
-        ba[i] = bigint<alt_bn128_r_limbs>(i*1024+212);
+        ba[i] = alt_bn128_Fr::random_element();
+//        ba[i] = bigint<alt_bn128_r_limbs>(i * 1024 + 212);
         if (i == 0) continue;
-//        bk[i] = alt_bn128_Fr::random_element();
-        bk[i] = bigint<alt_bn128_r_limbs>(i*1025+3214);
+        bk[i] = alt_bn128_Fr::random_element();
+//        bk[i] = bigint<alt_bn128_r_limbs>(i * 1025 + 3214);
     }
     // calculate bk1
     alt_bn128_Fr left_part(0);
@@ -251,11 +203,59 @@ ProofBalance AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<
     }
 
 
-    return ProofBalance(c, a_, k_);
+    return Proof(c, a_, k_);
 }
 
-bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, ProofBalance &pi) {
+bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
+    //check jointsplit
     int n = cmts.size();
+    //calculate challenge x
+    unsigned char digest[32];
+    int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
+    int message_size = (n - m) * size_of_G1 * 2;
+    unsigned char *message = new unsigned char[message_size];
+    int start = 0; // record memcpy location
+    for (int i = m; i < n; i++) {
+        alt_bn128_G1 gamma = cmts[i].first;
+        encode_G1(message + start, gamma);
+        alt_bn128_G1 yita = cmts[i].second;
+        encode_G1(message + start + size_of_G1, yita);
+        start += 2 * size_of_G1;
+    }
+    sha256(digest, message, message_size);
+    string challenge;
+    for (int i = 0; i < 32; i++) {
+        std::stringstream ss;
+        ss << setfill('0') << setw(2) << std::hex << int(digest[i]);
+        string result(ss.str());
+        challenge += result;
+    }
+    cout << std::dec;
+    mpz_t x_mpz;
+    mpz_init_set_str(x_mpz, challenge.c_str(), 16);
+    alt_bn128_Fr x = alt_bn128_Fr(x_mpz);
+    delete[]message;
+
+
+    // optimized pairing check
+    alt_bn128_G1 assemble_gamma = cmts[m].first;
+    alt_bn128_G1 assemble_yita = cmts[m].second;
+    for (int i = m + 1; i < n; i++) {
+        alt_bn128_G1 gamma = cmts[i].first;
+        alt_bn128_G1 yita = cmts[i].second;
+        alt_bn128_Fr tmp = (x ^ i) * pi.c;
+        assemble_gamma = assemble_gamma + tmp * gamma;
+        assemble_yita = assemble_yita + tmp * yita;
+
+    }
+    // check one pairing
+    if (alt_bn128_reduced_pairing(assemble_gamma, t2) != (alt_bn128_reduced_pairing(assemble_yita, g2))) {
+        cout << "check pariing fail" << endl;
+        return false;
+    }
+
+
+    // check balance
     if (!(m >= 0 && m <= n)) {
         printf("wrong size of m");
         return 0;
@@ -275,8 +275,7 @@ bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, ProofBalance &
         }
         k1_ += alt_bn128_Fr(k_public) * pi.c;
     }
-    // test smart contract
-    cout << "k1:" << k1_ << endl;
+
 
     vector<alt_bn128_G1> B(n);
     for (int i = 0; i < n; ++i) {
@@ -287,12 +286,8 @@ bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, ProofBalance &
         } else {
             B[i] = pi.k_[i - 1] * gamma + pi.a_[i] * h + -pi.c * yita;
         }
-        cout << "B" << i << endl;
-        B[i].print();
     }
     alt_bn128_Fr c = calculate_challenge(cmts, m, B);
-    cout << "calculate challenge:" <<  endl;
-    c.print();
     return c == pi.c;
 }
 
