@@ -57,12 +57,18 @@ void AZTEC::encode_Fr(unsigned char *packed_data, alt_bn128_Fr &target) {
 }
 
 
-AZTEC::AZTEC(alt_bn128_G1 &h, int y, int k_max) : h(h), y(y), k_max(k_max), mu(vector<alt_bn128_G1>(k_max + 1)),
-                                                  g(alt_bn128_G1::G1_one), g2(alt_bn128_G2::G2_one) {
-    if (y <= k_max) {
-        printf("y should be larger than k_max");
-        exit(-1);
-    }
+AZTEC::AZTEC() : g(alt_bn128_G1::G1_one), g2(alt_bn128_G2::G2_one) {
+
+    alt_bn128_Fq h_x(
+            bigint<alt_bn128_q_limbs>("14324065101854746342085664436165942347072198337701294035289149726922309145121"));
+    alt_bn128_Fq h_y(
+            bigint<alt_bn128_q_limbs>("5565878794651397487034759341269177878528156373705070183913823735921311218924"));
+    alt_bn128_Fq h_z(
+            bigint<alt_bn128_q_limbs>("1273135230656633615739165012850001360241518959027186091691264253859941821107"));
+    h = alt_bn128_G1(h_x, h_y, h_z);
+    y = 1 << 26;
+    k_max = (1 << 12) - 1;
+    mu = vector<alt_bn128_G1>(k_max + 1);
 
     //generate mu
     for (int i = 0; i <= k_max; i++) {
@@ -87,7 +93,7 @@ alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<
     unsigned char digest[32];
     int size_of_G1 = alt_bn128_q_limbs * sizeof(mp_limb_t) * 2;
     int message_size = size_of_G1 * 2 * n + 32 + size_of_G1 * n;
-    cout << "message size: " << message_size << endl;
+//    cout << "message size: " << message_size << endl;
     unsigned char *message = new unsigned char[message_size];
 
     int start = 0; // record memcpy location
@@ -290,7 +296,7 @@ bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
 }
 
 string AZTEC::serializeFr(alt_bn128_Fr &point) {
-    char s[64];
+    char s[65];
     gmp_sprintf(s, "%Nx", point.as_bigint().data, 4);
     int length = strlen(s);
     if (length < 64) {
@@ -300,7 +306,7 @@ string AZTEC::serializeFr(alt_bn128_Fr &point) {
 }
 
 string AZTEC::serializeFq(alt_bn128_Fq &point) {
-    char s[64];
+    char s[65];
     gmp_sprintf(s, "%Nx", point.as_bigint().data, 4);
     int length = strlen(s);
     if (length < 64) {

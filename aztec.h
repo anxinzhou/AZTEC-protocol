@@ -31,8 +31,8 @@ public:
     typedef pair<int, alt_bn128_Fr> commitment_source;
 
     alt_bn128_G1 h;
-    const int y;
-    const int k_max;
+    int y;
+    int k_max;
     alt_bn128_G2 t2;
 
     alt_bn128_G1 g;
@@ -41,7 +41,7 @@ public:
 
     vector<alt_bn128_G1> mu;
 
-    AZTEC(alt_bn128_G1 &h, int y, int k_max);
+    AZTEC();
 
     static string serializeFr(alt_bn128_Fr &point);
 
