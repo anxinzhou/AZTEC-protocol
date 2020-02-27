@@ -58,7 +58,7 @@ void AZTEC::encode_Fr(unsigned char *packed_data, alt_bn128_Fr &target) {
 
 
 AZTEC::AZTEC() : g(alt_bn128_G1::G1_one), g2(alt_bn128_G2::G2_one) {
-
+    alt_bn128_pp::init_public_params();
     alt_bn128_Fq h_x(
             bigint<alt_bn128_q_limbs>("14324065101854746342085664436165942347072198337701294035289149726922309145121"));
     alt_bn128_Fq h_y(

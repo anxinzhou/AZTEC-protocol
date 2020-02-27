@@ -10,7 +10,7 @@ set(CMAKE_BUILD_TYPE  Release)
 include(GNUInstallDirs)
 set(MY_LIB aztec)
 set(MY_HEADER aztec.h)
-add_library(${MY_LIB} STATIC  aztec.cpp)
+add_library(${MY_LIB} SHARED  aztec.cpp)
 set_target_properties(${MY_LIB} PROPERTIES PUBLIC_HEADER "${MY_HEADER}")
 target_include_directories(${MY_LIB} PUBLIC ${PROJECT_SOURCE_DIR})
 install(TARGETS ${MY_LIB}
