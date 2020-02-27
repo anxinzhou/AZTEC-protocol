@@ -261,7 +261,7 @@ bool AZTEC::__verify(vector<commitment> &cmts, int m, int k_public, Proof &pi, b
 
         }
     } else {
-        if(m!=n) {  // when m==n no need to check
+        if(m!=0) {  // when m==n no need to check
             // optimized pairing check
             alt_bn128_G1 assemble_gamma = cmts[m].first;
             alt_bn128_G1 assemble_yita = cmts[m].second;
