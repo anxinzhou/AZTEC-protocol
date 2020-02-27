@@ -26,10 +26,10 @@ int main() {
 
 
     // test
-    int k_public = 5;
-    int m = 2;
+    int k_public = 1000-2*197;
+    int m = 4;
     int n = 5;
-    vector<int> value{7, 5, 1, 2, 4};
+    vector<int> value{198, 195, 197, 213, 197};
     vector<AZTEC::commitment> cmts(n);
     vector<alt_bn128_Fr> randomness(n);
     for (int i = 0; i < n; i++) {
@@ -53,7 +53,7 @@ int main() {
         ContractVerifyContent content(pi, cmts, m, k_public);
 //        cout << (content.serialize()) << endl;
 
-        bool result = aztec.verify(cmts, m, k_public, pi);
+        bool result = aztec.verify_move_in(cmts, m, k_public, pi);
         if (result) {
 //            printf("verify success %d\n",i);
         } else {

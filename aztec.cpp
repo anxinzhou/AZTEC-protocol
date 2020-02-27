@@ -210,7 +210,7 @@ Proof AZTEC::proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::
     return Proof(c, a_, k_);
 }
 
-bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
+bool AZTEC::__verify(vector<commitment> &cmts, int m, int k_public, Proof &pi, bool move_out) {
     //check jointsplit
     int n = cmts.size();
     //calculate challenge x
@@ -240,24 +240,46 @@ bool AZTEC::verify(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
     alt_bn128_Fr x = alt_bn128_Fr(x_mpz);
     delete[]message;
 
-    if(m!=n) {  // when m==n no need to check
-        // optimized pairing check
-        alt_bn128_G1 assemble_gamma = cmts[m].first;
-        alt_bn128_G1 assemble_yita = cmts[m].second;
-        for (int i = m + 1; i < n; i++) {
-            alt_bn128_G1 gamma = cmts[i].first;
-            alt_bn128_G1 yita = cmts[i].second;
-            alt_bn128_Fr tmp = (x ^ i) * pi.c;
-            assemble_gamma = assemble_gamma + tmp * gamma;
-            assemble_yita = assemble_yita + tmp * yita;
+    if(move_out) {
+        if(m!=n) {  // when m==n no need to check
+            // optimized pairing check
+            alt_bn128_G1 assemble_gamma = cmts[m].first;
+            alt_bn128_G1 assemble_yita = cmts[m].second;
+            for (int i = m; i < n; i++) {
+                alt_bn128_G1 gamma = cmts[i].first;
+                alt_bn128_G1 yita = cmts[i].second;
+                alt_bn128_Fr tmp = (x ^ i) * pi.c;
+                assemble_gamma = assemble_gamma + tmp * gamma;
+                assemble_yita = assemble_yita + tmp * yita;
+
+            }
+            // check one pairing
+            if (alt_bn128_reduced_pairing(assemble_gamma, t2) != (alt_bn128_reduced_pairing(assemble_yita, g2))) {
+                cout << "check pariing fail" << endl;
+                return false;
+            }
 
         }
-        // check one pairing
-        if (alt_bn128_reduced_pairing(assemble_gamma, t2) != (alt_bn128_reduced_pairing(assemble_yita, g2))) {
-            cout << "check pariing fail" << endl;
-            return false;
-        }
+    } else {
+        if(m!=n) {  // when m==n no need to check
+            // optimized pairing check
+            alt_bn128_G1 assemble_gamma = cmts[m].first;
+            alt_bn128_G1 assemble_yita = cmts[m].second;
+            for (int i = 0; i < m; i++) {
+                alt_bn128_G1 gamma = cmts[i].first;
+                alt_bn128_G1 yita = cmts[i].second;
+                alt_bn128_Fr tmp = (x ^ i) * pi.c;
+                assemble_gamma = assemble_gamma + tmp * gamma;
+                assemble_yita = assemble_yita + tmp * yita;
 
+            }
+            // check one pairing
+            if (alt_bn128_reduced_pairing(assemble_gamma, t2) != (alt_bn128_reduced_pairing(assemble_yita, g2))) {
+                cout << "check pariing fail" << endl;
+                return false;
+            }
+
+        }
     }
 
     // check balance

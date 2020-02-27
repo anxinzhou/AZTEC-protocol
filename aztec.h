@@ -53,8 +53,13 @@ public:
 
     Proof proof(vector<commitment> &cmts, int m, int k_public, vector<AZTEC::commitment_source> &cmts_source);
 
-    bool verify(vector<commitment> &cmts, int m, int k_public, Proof &pi);
+    inline bool verify_move_out(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
+        return __verify(cmts, m, k_public, pi, true);
+    }
 
+    inline bool verify_move_in(vector<commitment> &cmts, int m, int k_public, Proof &pi) {
+        return __verify(cmts, m, k_public, pi, false);
+    }
 
     alt_bn128_Fr calculate_challenge(vector<commitment> &cmts, int m, vector<alt_bn128_G1> &B);
 
@@ -63,6 +68,9 @@ public:
     void encode_G1(unsigned char *packed_data, alt_bn128_G1 &target);
 
     void encode_Fr(unsigned char *paced_data, alt_bn128_Fr &target);
+
+private:
+    bool __verify(vector<commitment> &cmts, int m, int k_public, Proof &pi, bool move_out);
 
 };
 
@@ -75,11 +83,14 @@ public:
     alt_bn128_Fr c;
     string a_;
     string k_;
-    ContractVerifySerializeOBJ(string &gamma, string &yita, int m, int k_public, alt_bn128_Fr c, string &a_, string &k_):
-            gamma(gamma),yita(yita),m(m),k_public(k_public),c(c),a_(a_),k_(k_){};
+
+    ContractVerifySerializeOBJ(string &gamma, string &yita, int m, int k_public, alt_bn128_Fr c, string &a_, string &k_)
+            :
+            gamma(gamma), yita(yita), m(m), k_public(k_public), c(c), a_(a_), k_(k_) {};
+
     void print() const;
 
-    friend std::ostream& operator<<(std::ostream &out, const ContractVerifySerializeOBJ &b) {
+    friend std::ostream &operator<<(std::ostream &out, const ContractVerifySerializeOBJ &b) {
         b.print();
         return out;
     }
@@ -94,7 +105,8 @@ public:
 
     ContractVerifyContent(Proof &pi, vector<AZTEC::commitment> &cmts, int m, int k_public) : pi(pi), cmts(cmts), m(m),
                                                                                              k_public(k_public) {};
-    ContractVerifySerializeOBJ serialize ();
+
+    ContractVerifySerializeOBJ serialize();
 };
 
 #endif //ANONYMOUS_PAYMENT_AZTEC_H
