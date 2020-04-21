@@ -441,24 +441,45 @@ contract AZTEC {
         return output[0] % r;
     }
 
-    function __verify_pairing(G1Point[] memory gamma, G1Point[] memory yita, uint m, uint n, uint c) internal returns (bool) {
-        G1Point memory assemble_gamma;
-        G1Point memory assemble_yita;
-        uint x = __calculate_challenge_x(gamma, yita);
-        for (uint i = m; i < n; i++) {
-            G1Point memory gamma = gamma[i];
-            G1Point memory yita = yita[i];
-            if (i == m) {
-                assemble_gamma = gamma;
-                assemble_yita = yita;
-            } else {
-                uint fr = FrMultiply(FrMultiply(x, i), c);
-                assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(gamma, fr));
-                assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(yita, fr));
+    function __verify_pairing(G1Point[] memory gamma, G1Point[] memory yita, uint m, uint n, uint c, bool move_out) internal returns (bool) {
+        if (move_out) {
+            if (m == n) return true;
+            G1Point memory assemble_gamma;
+            G1Point memory assemble_yita;
+            uint x = __calculate_challenge_x(gamma, yita);
+            for (uint i = m; i < n; i++) {
+                G1Point memory gamma = gamma[i];
+                G1Point memory yita = yita[i];
+                if (i == m) {
+                    assemble_gamma = gamma;
+                    assemble_yita = yita;
+                } else {
+                    uint fr = FrMultiply(FrMultiply(x, i), c);
+                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(gamma, fr));
+                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(yita, fr));
+                }
             }
-        }
 
-        return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
+            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
+        } else {
+            if (m == 0) return true;
+            G1Point memory assemble_gamma;
+            G1Point memory assemble_yita;
+            uint x = __calculate_challenge_x(gamma, yita);
+            for (uint i = 0; i < m; i++) {
+                G1Point memory gamma = gamma[i];
+                G1Point memory yita = yita[i];
+                if (i == m) {
+                    assemble_gamma = gamma;
+                    assemble_yita = yita;
+                } else {
+                    uint fr = FrMultiply(FrMultiply(x, i), c);
+                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(gamma, fr));
+                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(yita, fr));
+                }
+            }
+            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
+        }
 
         // for(uint i=m;i<n;i++) {
         //     bool result = check_pairing(gamma[i],T2(),yita[i],G2());
@@ -470,7 +491,7 @@ contract AZTEC {
     }
 
 
-    function verify(bytes memory gamma_byte, bytes memory yita_byte, uint m, uint k_public, uint c, bytes memory a_bytes, bytes memory k_bytes, uint n) public {
+    function verify(bytes memory gamma_byte, bytes memory yita_byte, uint m, uint k_public, uint c, bytes memory a_bytes, bytes memory k_bytes, uint n, bool move_out) internal {
         require(gamma_byte.length == n * 64, "gamma length not qualify");
         require(yita_byte.length == n * 64, "yita length not qualify");
         require(a_bytes.length == n * 32, "a_ length not qualify");
@@ -483,7 +504,7 @@ contract AZTEC {
         uint [] memory k_ = parseFr(k_bytes);
 
         // verify pariing
-        require(__verify_pairing(gamma, yita, m, n, c));
+        require(__verify_pairing(gamma, yita, m, n, c, move_out));
         // verify balance
         require(__verify_balance(gamma, yita, m, k_public, c, a_, k_, n));
 
@@ -495,5 +516,11 @@ contract AZTEC {
 
     }
 
+    function verify_move_in(bytes memory gamma_byte, bytes memory yita_byte, uint m, uint k_public, uint c, bytes memory a_bytes, bytes memory k_bytes, uint n) public {
+        verify(gamma_byte, yita_byte, m, k_public, c, a_bytes, k_bytes, n, false);
+    }
 
+    function verify_move_out(bytes memory gamma_byte, bytes memory yita_byte, uint m, uint k_public, uint c, bytes memory a_bytes, bytes memory k_bytes, uint n) public {
+        verify(gamma_byte, yita_byte, m, k_public, c, a_bytes, k_bytes, n, true);
+    }
 }

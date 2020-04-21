@@ -26,8 +26,8 @@ int main() {
 
 
     // test
-    int k_public = 1000-2*197;
-    int m = 4;
+    int k_public = 1000;
+    int m = 5;
     int n = 5;
     vector<int> value{198, 195, 197, 213, 197};
     vector<AZTEC::commitment> cmts(n);
@@ -36,8 +36,9 @@ int main() {
         randomness[i] = alt_bn128_Fr::random_element();
         // use randomness for debug
 //        randomness[i] = alt_bn128_Fr(alt_bn128_modulus_r)-alt_bn128_Fr(bigint<alt_bn128_r_limbs>(i*1024+212));
-
     }
+
+
     vector<AZTEC::commitment_source> cmts_source(n);
     for (int i = 0; i < n; i++) {
         int k = value[i];

@@ -85,7 +85,7 @@ AZTEC::AZTEC() : g(alt_bn128_G1::G1_one), g2(alt_bn128_G2::G2_one) {
 AZTEC::commitment AZTEC::commit(int k, alt_bn128_Fr &a) {
     alt_bn128_G1 gamma = a * mu[k];
     alt_bn128_G1 sigma = (alt_bn128_Fr(k) * a) * mu[k] + a * h;
-    return commitment(gamma, sigma);
+    return {gamma, sigma};
 }
 
 alt_bn128_Fr AZTEC::calculate_challenge(vector<commitment> &cmts, int m, vector<alt_bn128_G1> &B) {
