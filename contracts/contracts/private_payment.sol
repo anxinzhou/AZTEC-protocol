@@ -1,4 +1,4 @@
-pragma solidity >=0.5.2 <= 0.6.2;
+pragma solidity >=0.5.1 <= 0.6.2;
 
 contract AZTEC {
 
@@ -373,39 +373,6 @@ contract AZTEC {
             uint x = __calculate_challenge_x(gamma, yita);
             for (uint i = m; i < n; i++) {
 
-                G1Point memory gamma = gamma[i];
-                G1Point memory yita = yita[i];
-                if (i == m) {
-                    assemble_gamma = gamma;
-                    assemble_yita = yita;
-                } else {
-                    uint fr = FrMultiply(FrMultiply(x, i), c);
-                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(gamma, fr));
-                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(yita, fr));
-                }
-            }
-
-            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
-        } else {
-            if (m == 0) return true;
-            G1Point memory assemble_gamma;
-            G1Point memory assemble_yita;
-            uint x = __calculate_challenge_x(gamma, yita);
-            for (uint i = 0; i < m; i++) {
-                G1Point memory gamma = gamma[i];
-                G1Point memory yita = yita[i];
-                if (i == m) {
-                    assemble_gamma = gamma;
-                    assemble_yita = yita;
-                } else {
-                    uint fr = FrMultiply(FrMultiply(x, i), c);
-                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(gamma, fr));
-                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(yita, fr));
-                }
-            }
-            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
-        }
-
                 G1Point memory _gamma = gamma[i];
                 G1Point memory _yita = yita[i];
                 if (i == m) {
@@ -427,7 +394,7 @@ contract AZTEC {
             for (uint i = 0; i < m; i++) {
                 G1Point memory _gamma = gamma[i];
                 G1Point memory _yita = yita[i];
-                if (i == 0) {
+                if (i == m) {
                     assemble_gamma = _gamma;
                     assemble_yita = _yita;
                 } else {
@@ -469,5 +436,9 @@ contract AZTEC {
 
     function verify_move_out(bytes memory gamma_byte, bytes memory yita_byte, uint m, uint k_public, uint c, bytes memory a_bytes, bytes memory k_bytes, uint n) public {
         verify(gamma_byte, yita_byte, m, k_public, c, a_bytes, k_bytes, n, true);
+    }
+
+    function test() public {
+        
     }
 }

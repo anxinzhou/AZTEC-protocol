@@ -83,10 +83,11 @@ public:
     alt_bn128_Fr c;
     string a_;
     string k_;
+    int n;
 
-    ContractVerifySerializeOBJ(string &gamma, string &yita, int m, int k_public, alt_bn128_Fr c, string &a_, string &k_)
+    ContractVerifySerializeOBJ(string &gamma, string &yita, int m, int k_public, alt_bn128_Fr c, string &a_, string &k_,int n)
             :
-            gamma(gamma), yita(yita), m(m), k_public(k_public), c(c), a_(a_), k_(k_) {};
+            gamma(gamma), yita(yita), m(m), n(n),k_public(k_public), c(c), a_(a_), k_(k_) {};
 
     void print() const;
 
@@ -102,8 +103,9 @@ public:
     vector<AZTEC::commitment> cmts;
     int m;
     int k_public;
+    int n;
 
-    ContractVerifyContent(Proof &pi, vector<AZTEC::commitment> &cmts, int m, int k_public) : pi(pi), cmts(cmts), m(m),
+    ContractVerifyContent(Proof &pi, vector<AZTEC::commitment> &cmts, int m, int k_public,int n) : pi(pi), cmts(cmts), m(m),n(n),
                                                                                              k_public(k_public) {};
 
     ContractVerifySerializeOBJ serialize();

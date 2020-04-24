@@ -26,10 +26,18 @@ int main() {
 
 
     // test
-    int k_public = 1000;
-    int m = 5;
-    int n = 5;
-    vector<int> value{198, 195, 197, 213, 197};
+    int k_public = 0;
+    int n= 4;
+    int m = 2;
+    vector<int>value;
+    for(int i=0;i<n;i++) {
+        value.push_back(n-i);
+        k_public+= n-i;
+    }
+    for(int i=m;i<n;i++) {
+        k_public -=2*(n-i);
+    }
+//    vector<int> value{198, 195, 197, 213, 197};
     vector<AZTEC::commitment> cmts(n);
     vector<alt_bn128_Fr> randomness(n);
     for (int i = 0; i < n; i++) {
@@ -48,12 +56,14 @@ int main() {
     }
 
 
-    t1 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 100; i++) {
-        Proof pi = aztec.proof(cmts, m, k_public, cmts_source);
-        ContractVerifyContent content(pi, cmts, m, k_public);
-//        cout << (content.serialize()) << endl;
 
+    for (int i = 0; i < 1; i++) {
+        t1 = std::chrono::high_resolution_clock::now();
+        Proof pi = aztec.proof(cmts, m, k_public, cmts_source);
+        t2 = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+        std::cout << duration / 1000.0 / 1000 << "s" << endl;
         bool result = aztec.verify_move_in(cmts, m, k_public, pi);
         if (result) {
 //            printf("verify success %d\n",i);
@@ -61,12 +71,14 @@ int main() {
             printf("verify fail %d", i);
             exit(-1);
         }
+
+
+        ContractVerifyContent content(pi, cmts, m, k_public,n);
+        cout << (content.serialize()) << endl;
+
     }
-    t2 = std::chrono::high_resolution_clock::now();
 
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 
-    std::cout << duration / 1000.0 / 1000 << "s" << endl;
 
 
     cout << "pass test" << endl;

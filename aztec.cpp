@@ -240,12 +240,12 @@ bool AZTEC::__verify(vector<commitment> &cmts, int m, int k_public, Proof &pi, b
     alt_bn128_Fr x = alt_bn128_Fr(x_mpz);
     delete[]message;
 
-    if(move_out) {
-        if(m!=n) {  // when m==n no need to check
+    if (move_out) {
+        if (m != n) {  // when m==n no need to check
             // optimized pairing check
             alt_bn128_G1 assemble_gamma = cmts[m].first;
             alt_bn128_G1 assemble_yita = cmts[m].second;
-            for (int i = m; i < n; i++) {
+            for (int i = m + 1; i < n; i++) {
                 alt_bn128_G1 gamma = cmts[i].first;
                 alt_bn128_G1 yita = cmts[i].second;
                 alt_bn128_Fr tmp = (x ^ i) * pi.c;
@@ -261,11 +261,11 @@ bool AZTEC::__verify(vector<commitment> &cmts, int m, int k_public, Proof &pi, b
 
         }
     } else {
-        if(m!=0) {  // when m==n no need to check
+        if (m != 0) {  // when m=0 no need to check
             // optimized pairing check
-            alt_bn128_G1 assemble_gamma = cmts[m].first;
-            alt_bn128_G1 assemble_yita = cmts[m].second;
-            for (int i = 0; i < m; i++) {
+            alt_bn128_G1 assemble_gamma = cmts[0].first;
+            alt_bn128_G1 assemble_yita = cmts[0].second;
+            for (int i = 1; i < m; i++) {
                 alt_bn128_G1 gamma = cmts[i].first;
                 alt_bn128_G1 yita = cmts[i].second;
                 alt_bn128_Fr tmp = (x ^ i) * pi.c;
@@ -350,9 +350,18 @@ void ContractVerifySerializeOBJ::print() const {
     cout << "yita:" << "0x" << yita << endl;
     cout << "m:" << m << endl;
     cout << "k_public:" << k_public << endl;
-    cout << "c:" << c << endl;
+    cout << "c:" << std::hex << "0x" << c << std::dec << endl;
     cout << "a_:" << "0x" << a_ << endl;
     cout << "k_:" << "0x" << k_ << endl;
+    cout << "n:" << n << endl;
+    cout << "\"0x" << gamma << "\",";
+    cout << "\"0x" << yita << "\",";
+    cout << m << ",";
+    cout << k_public << ",";
+    cout << "web3.utils.toBN("<<std::hex << "\"0x" << c << std::dec <<"\"),";
+    cout << "\"0x" << a_ << "\",";
+    cout << "\"0x" << k_ << "\",";
+    cout<<n<<endl;
 }
 
 
@@ -369,5 +378,5 @@ ContractVerifySerializeOBJ ContractVerifyContent::serialize() {
             k_ += AZTEC::serializeFr(pi.k_[i]);
         }
     }
-    return ContractVerifySerializeOBJ(gamma, yita, m, k_public, pi.c, a_, k_);
+    return ContractVerifySerializeOBJ(gamma, yita, m, k_public, pi.c, a_, k_, n);
 }
