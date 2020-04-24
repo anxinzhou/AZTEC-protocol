@@ -13,17 +13,6 @@ contract AZTEC {
     }
 
     G1Point public h;
-    //DEBUG
-    bool public result;
-    uint public _challenge;
-    uint public _c;
-    uint public _k1_;
-    G1Point[5] public _B;
-    G1Point[5] public _gmmma;
-    uint[5] public _a;
-    uint[5] public _k;
-    uint public length;
-    bytes public _hash_bytes;
     //
     constructor () public {
         h = G1Point(17566712222922113045832476702662482910568538497722999586102925295983692901801,
@@ -43,7 +32,6 @@ contract AZTEC {
         // Use "invalid" to make gas estimation work
             switch success case 0 {invalid()}
         }
-        require(success);
         return result[0];
     }
 
@@ -63,10 +51,10 @@ contract AZTEC {
 
     function T2() pure internal returns (G2Point memory) {
         return G2Point(
-            [5990593653315983514308166002378384853543199812950622517592752252298452891399,
-            18938412597569265292143203222304519889896224411182051138145378470742165494016],
-            [11879099075251789550966935786809018629705117531521832862015470191526947232239,
-            18757259005281857200464295146398188739942190478197027227501644917837701755062]);
+            [15550367399297628273624438287621380017282572154382051357698370679315571497817,
+            12844800326064458347147611935234845946808492434262207421197939364988366441692],
+            [1980405202821170546711664577257332226944093267916862049467402286356570294617,
+            4999241324840461877046134530060071115217676474560883485092230926282487067324]);
     }
 
     function pairing(G1Point [] memory p1, G2Point[] memory p2) internal returns (bool) {
@@ -90,7 +78,6 @@ contract AZTEC {
         // Use "invalid" to make gas estimation work
             switch success case 0 {invalid()}
         }
-        require(success);
         return out[0] != 0;
     }
 
@@ -155,7 +142,7 @@ contract AZTEC {
     }
 
     // use a*b = ((a+b)**2 - (a-b)**2)/4
-    function FrMultiply(uint x, uint y) internal returns (uint) {
+    function FrMultiply(uint x, uint y) view internal returns (uint) {
 
         if (x < y) {
             uint tmp;
@@ -259,7 +246,6 @@ contract AZTEC {
             }
             k1_ = FrAddition(k1_, FrMultiply(k_public, c));
         }
-        _k1_ = k1_;
 
         G1Point [] memory B = new G1Point[](n);
         for (uint i = 0; i < n; i++) {
@@ -274,71 +260,11 @@ contract AZTEC {
                 B[i] = G1PointAddition(G1PointAddition(k_mul_gamma, a_mul_h), c_mul_yita);
             }
         }
-        // //DEBUG
-        for (uint i = 0; i < 5; i++) {
-            _B[i] = G1Point(B[i].x, B[i].y);
 
-            // = G1Point(B[i].x,B[i].y);
-        }
-        //DEBUG
         uint challenge = __calculate_challenge(gamma, yita, m, B);
-        _challenge = challenge;
-        _c = c;
-        //
         return challenge == c;
-        // return true;
 
     }
-
-    // function __calculate_challenge(G1Point[] memory gamma, G1Point []memory yita, uint m, G1Point []memory B) pure internal returns (uint) {
-    //     bytes memory packed_bytes;
-    //     uint n = gamma.length;
-    //     for(uint i=0;i<n;i++) {
-    //         packed_bytes = abi.encodePacked(packed_bytes, bytes32(gamma[i].x), bytes32(gamma[i].y), bytes32(yita[i].x), bytes32(yita[i].y));
-    //     }
-
-    //     packed_bytes = abi.encodePacked(packed_bytes, bytes32(m));
-
-    //     for(uint i=0;i<n;i++) {
-    //         packed_bytes = abi.encodePacked(packed_bytes, bytes32(B[i].x), bytes32(B[i].y));
-    //     }
-    //     return uint(keccak256(packed_bytes));
-    // }
-
-    //  function __calculate_challenge(G1Point[] memory gamma, G1Point []memory yita, uint m, G1Point []memory B)  internal returns (uint) {
-    //      bytes memory packed_bytes;
-    //      uint gamma_length = 64*gamma.length;
-    //      uint start = 0x20;
-    //      uint gas_ = gasleft();
-    //      bool success;
-    //      assembly {
-    //         success := call(sub(gas_,2000), 4, 0, add(gamma,0x20),gamma_length , add(packed_bytes,start), gamma_length)
-    //         // Use "invalid" to make gas estimation work
-    //         switch success case 0 { invalid() }
-    //     }
-    //     start+=gamma_length;
-    //     uint yita_length = 64*gamma_length;
-    //       assembly {
-    //         success := call(sub(gas_,2000), 4, 0, add(yita,0x20), yita_length , add(packed_bytes,start), yita_length)
-    //         // Use "invalid" to make gas estimation work
-    //         switch success case 0 { invalid() }
-    //     }
-    //     start+=yita_length;
-    //      assembly {
-    //         mstore(add(packed_bytes,start),m)
-    //     }
-    //     start+=0x20;
-    //     uint B_length = 64*B.length;
-    //       assembly {
-    //         success := call(sub(gas_,2000), 4, 0, add(B,0x20), B_length , add(packed_bytes,start), B_length)
-    //         // Use "invalid" to make gas estimation work
-    //         switch success case 0 { invalid() }
-    //     }
-    //     // return uint(keccak256(abi.encodePacked(packed_bytes,B)));
-    //     return uint(keccak256(packed_bytes));
-    //  }
-
-
 
     function __calculate_challenge(G1Point[] memory gamma, G1Point []memory yita, uint m, G1Point []memory B) internal returns (uint) {
         uint challenge_size = 64 * (gamma.length + yita.length + B.length) + 32;
@@ -394,7 +320,6 @@ contract AZTEC {
         // Use "invalid" to make gas estimation work
             switch success case 0 {invalid()}
         }
-        _hash_bytes = packed_bytes;
 
         uint r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         return output[0] % r;
@@ -436,7 +361,6 @@ contract AZTEC {
         // Use "invalid" to make gas estimation work
             switch success case 0 {invalid()}
         }
-        _hash_bytes = packed_bytes;
         uint r = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         return output[0] % r;
     }
@@ -448,6 +372,7 @@ contract AZTEC {
             G1Point memory assemble_yita;
             uint x = __calculate_challenge_x(gamma, yita);
             for (uint i = m; i < n; i++) {
+
                 G1Point memory gamma = gamma[i];
                 G1Point memory yita = yita[i];
                 if (i == m) {
@@ -481,13 +406,38 @@ contract AZTEC {
             return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
         }
 
-        // for(uint i=m;i<n;i++) {
-        //     bool result = check_pairing(gamma[i],T2(),yita[i],G2());
-        //     if (!result) {
-        //         return false;
-        //     }
-        // }
-        // return true;
+                G1Point memory _gamma = gamma[i];
+                G1Point memory _yita = yita[i];
+                if (i == m) {
+                    assemble_gamma = _gamma;
+                    assemble_yita = _yita;
+                } else {
+                    uint fr = FrMultiply(FrMultiply(x, i), c);
+                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(_gamma, fr));
+                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(_yita, fr));
+                }
+            }
+
+            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
+        } else {
+            if (m == 0) return true;
+            G1Point memory assemble_gamma;
+            G1Point memory assemble_yita;
+            uint x = __calculate_challenge_x(gamma, yita);
+            for (uint i = 0; i < m; i++) {
+                G1Point memory _gamma = gamma[i];
+                G1Point memory _yita = yita[i];
+                if (i == 0) {
+                    assemble_gamma = _gamma;
+                    assemble_yita = _yita;
+                } else {
+                    uint fr = FrMultiply(FrMultiply(x, i), c);
+                    assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(_gamma, fr));
+                    assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(_yita, fr));
+                }
+            }
+            return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
+        }
     }
 
 
@@ -505,14 +455,11 @@ contract AZTEC {
 
         // verify pariing
         require(__verify_pairing(gamma, yita, m, n, c, move_out));
+
         // verify balance
+
         require(__verify_balance(gamma, yita, m, k_public, c, a_, k_, n));
 
-        //debug
-        //  for(uint i=0;i<5;i++) {
-        //     _a[i] = a_[i];
-        //     if(i!=4) {_k[i] = k_[i];}
-        // }
 
     }
 
