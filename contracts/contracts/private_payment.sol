@@ -1,4 +1,4 @@
-pragma solidity >=0.5.1 <= 0.6.2;
+pragma solidity >=0.5.0 <= 0.6.2;
 
 contract AZTEC {
 
@@ -491,50 +491,50 @@ contract AZTEC {
         // solutionHashCumulative = keccak256(abi.encodePacked(solutionHashCumulative, solution_hash));
     }
 
-    function _workerHash() internal view returns(bytes32) {
+    function _workerHash(uint worker_number) internal view returns(bytes32) {
         bytes32 solutionHash_cumulative;
-        for(uint i=0;i<workerNumber;i++) {
+        for(uint i=0;i<worker_number;i++) {
             solutionHash_cumulative = keccak256(abi.encodePacked(solutionHash_cumulative, solutionsHash[i]));
         }
         bytes32 issueKeyHash_cumulative;
-        for(uint i=0;i<workerNumber;i++) {
+        for(uint i=0;i<worker_number;i++) {
             issueKeyHash_cumulative = keccak256(abi.encodePacked(issueKeyHash_cumulative, workersIssuesPK[i]));
         }
         bytes32 scanKeyHash_cumulative;
-        for(uint i=0;i<workerNumber;i++) {
+        for(uint i=0;i<worker_number;i++) {
             scanKeyHash_cumulative = keccak256(abi.encodePacked(scanKeyHash_cumulative, workersScanPK[i]));
         }
         return keccak256(abi.encodePacked(solutionHash_cumulative, issueKeyHash_cumulative, scanKeyHash_cumulative));
     }
 
     function verifySignature(
-    bytes memory _B,
-    bytes memory _Q,
-    string memory truth_url,
-    bytes memory truth_hash,
-    bytes memory sig_enc,
-    bytes memory gamma_byte,
-    bytes memory yita_byte,
-    uint m,
-    uint k_public,
-    uint c,
-    bytes memory a_bytes,
-    bytes memory k_bytes,
-    uint n)  public{
+        bytes memory _B,
+        bytes memory _Q,
+        string memory truth_url,
+        bytes memory truth_hash,
+        bytes memory sig_enc,
+        bytes memory gamma_byte,
+        bytes memory yita_byte,
+        uint m,
+        uint k_public,
+        uint c,
+        bytes memory a_bytes,
+        bytes memory k_bytes,
+        uint n)  public{
 
         bytes32 program_hash = keccak256(abi.encodePacked(
-            _workerHash(),
-            _B,
-            _Q,
-            truth_hash,
-            gamma_byte,
-            yita_byte,
-            bytes32(m),
-            bytes32(k_public),
-            bytes32(c),
-            a_bytes,
-            k_bytes,
-            bytes32(n)
+                _workerHash(m),
+                _B,
+                _Q,
+                truth_hash,
+                gamma_byte,
+                yita_byte,
+                bytes32(m),
+                bytes32(k_public),
+                bytes32(c),
+                a_bytes,
+                k_bytes,
+                bytes32(n)
             ));
         ecrecover(program_hash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;
         BWorker = _B;
@@ -544,19 +544,19 @@ contract AZTEC {
     }
 
     function discoverTruth(
-    bytes memory _B,
-    bytes memory _Q,
-    string memory truth_url,
-    bytes memory truth_hash,
-    bytes memory sig_enc,
-    bytes memory gamma_byte,
-    bytes memory yita_byte,
-    uint m,
-    uint k_public,
-    uint c,
-    bytes memory a_bytes,
-    bytes memory k_bytes,
-    uint n) public {
+        bytes memory _B,
+        bytes memory _Q,
+        string memory truth_url,
+        bytes memory truth_hash,
+        bytes memory sig_enc,
+        bytes memory gamma_byte,
+        bytes memory yita_byte,
+        uint m,
+        uint k_public,
+        uint c,
+        bytes memory a_bytes,
+        bytes memory k_bytes,
+        uint n) public {
         verifySignature(_B, _Q, truth_url,truth_hash, sig_enc, gamma_byte, yita_byte, m, k_public, c,a_bytes, k_bytes,n);
         verify_move_in(gamma_byte, yita_byte, m, k_public, c, a_bytes, k_bytes, n);
     }
