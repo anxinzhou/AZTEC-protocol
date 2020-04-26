@@ -1,0 +1,14 @@
+version: '3.2'
+services:
+  geth:
+    build: .
+    image: xarcher/private-chain:lastest
+    ports:
+      - "127.0.0.1:8540:8540"
+      - "127.0.0.1:8650:8650"
+      - "127.0.0.1:30311:30311"
+    command: sh start.sh
+    volumes:
+      - type: bind
+        source: ./node
+        target: /privateChain/node

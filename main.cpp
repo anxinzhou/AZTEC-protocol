@@ -27,8 +27,8 @@ int main() {
 
     // test
     int k_public = 0;
-    int n= 4;
-    int m = 2;
+    int n= 32;
+    int m = n;
     vector<int>value;
     for(int i=0;i<n;i++) {
         value.push_back(n-i);

@@ -1,4 +1,4 @@
-pragma solidity >=0.4.21 <0.7.0;
+pragma solidity >=0.5.1 <0.7.0;
 
 contract Migrations {
   address public owner;
@@ -8,11 +8,11 @@ contract Migrations {
     owner = msg.sender;
   }
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
+  // modifier restricted() {
+  //   if (msg.sender == owner) _;
+  // }
 
-  function setCompleted(uint completed) public restricted {
+  function setCompleted(uint completed) public  {
     last_completed_migration = completed;
   }
 }
