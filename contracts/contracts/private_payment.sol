@@ -22,7 +22,24 @@ contract AZTEC {
     bytes public QWorker;
     string public truthUrl;
     bytes public truthHash;
-    bytes32 public solutionHashCumulative;
+
+    bytes [] public BWorker2;
+    bytes [] public QWorker2;
+
+    bytes32 cumulateSigHash;
+    bytes32 solutionHashCumulative;
+
+    bytes32 issueKeyHashCumulative;
+    bytes32 scanKeyHashCumulative;
+
+    G1Point public assembleGamma;
+    G1Point public assembleYita;
+    uint truthStageCounter = 0;
+    bytes32 challengeX;
+    bytes32 challengeC;
+
+    uint cumulateK1;
+
 
     struct G1Point {
         uint x;
@@ -416,14 +433,14 @@ contract AZTEC {
             for (uint i = 0; i < m; i++) {
                 G1Point memory _gamma = gamma[i];
                 G1Point memory _yita = yita[i];
-                if (i == m) {
-                    assemble_gamma = _gamma;
-                    assemble_yita = _yita;
-                } else {
+                // if (i == m) {
+                //     assemble_gamma = _gamma;
+                //     assemble_yita = _yita;
+                // } else {
                     uint fr = FrMultiply(FrMultiply(x, i), c);
                     assemble_gamma = G1PointAddition(assemble_gamma, G1PointScaleMul(_gamma, fr));
                     assemble_yita = G1PointAddition(assemble_yita, G1PointScaleMul(_yita, fr));
-                }
+                // }
             }
             return check_pairing(assemble_gamma, T2(), assemble_yita, G2());
         }
@@ -478,6 +495,8 @@ contract AZTEC {
     function registerWorker(bytes calldata scan_pk, bytes calldata issue_pk ) external {
         workersScanPK.push(scan_pk);
         workersIssuesPK.push(issue_pk);
+        scanKeyHashCumulative = keccak256(abi.encodePacked(scanKeyHashCumulative, scan_pk));
+        issueKeyHashCumulative=keccak256(abi.encodePacked(issueKeyHashCumulative, issue_pk));
     }
 
     function registerSP(bytes calldata pk_enclave) external {
@@ -488,23 +507,143 @@ contract AZTEC {
     function upLoadSolution(string calldata solution_url, bytes calldata solution_hash) external {
         solutionsUrl.push(solution_url);
         solutionsHash.push(solution_hash);
-        // solutionHashCumulative = keccak256(abi.encodePacked(solutionHashCumulative, solution_hash));
+        solutionHashCumulative = keccak256(abi.encodePacked(solutionHashCumulative, solution_hash));
     }
 
-    function _workerHash(uint worker_number) internal view returns(bytes32) {
-        bytes32 solutionHash_cumulative;
-        for(uint i=0;i<worker_number;i++) {
-            solutionHash_cumulative = keccak256(abi.encodePacked(solutionHash_cumulative, solutionsHash[i]));
+    function _workerHash() internal view returns(bytes32) {
+        // bytes32 solutionHash_cumulative;
+        // for(uint i=0;i<worker_number;i++) {
+        //     solutionHash_cumulative = keccak256(abi.encodePacked(solutionHash_cumulative, solutionsHash[i]));
+        // }
+        // bytes32 issueKeyHash_cumulative;
+        // for(uint i=0;i<worker_number;i++) {
+        //     issueKeyHash_cumulative = keccak256(abi.encodePacked(issueKeyHash_cumulative, workersIssuesPK[i]));
+        // }
+        // bytes32 scanKeyHash_cumulative;
+        // for(uint i=0;i<worker_number;i++) {
+        //     scanKeyHash_cumulative = keccak256(abi.encodePacked(scanKeyHash_cumulative, workersScanPK[i]));
+        // }
+        // return keccak256(abi.encodePacked(solutionHash_cumulative, issueKeyHash_cumulative, scanKeyHash_cumulative));
+        return keccak256(abi.encodePacked(solutionHashCumulative, issueKeyHashCumulative, scanKeyHashCumulative));
+    }
+
+    function verifyTruthChallenge(bytes memory gamma_byte, bytes memory yita_byte, bytes memory k_bytes) public{
+        G1Point []memory gamma = parseG1(gamma_byte);
+            //
+        G1Point []memory yita = parseG1(yita_byte);
+        challengeX = keccak256(abi.encodePacked(challengeX ,__calculate_challenge_x(gamma, yita)));
+
+        uint [] memory k_ = parseFr(k_bytes);
+        cumulateK1 = FrAddition(cumulateK1, FrNegate(k_[0]));
+    }
+
+
+    function verifyTruthStage1(bytes memory _B,
+        bytes memory _Q,
+    bytes memory gamma_byte,
+        bytes memory yita_byte,
+        bytes memory a_bytes,
+        bytes memory k_bytes,
+        uint c
+        ) public {
+            BWorker2.push(_B);
+            QWorker2.push(_Q);
+            cumulateSigHash = keccak256(
+                abi.encodePacked(
+                cumulateSigHash,
+                _B,
+                _Q,
+                gamma_byte,
+                yita_byte,
+                a_bytes,
+                k_bytes
+                    ));
+
+            G1Point []memory gamma = parseG1(gamma_byte);
+            //
+
+            G1Point []memory yita = parseG1(yita_byte);
+            uint [] memory a_ = parseFr(a_bytes);
+            uint [] memory k_ = parseFr(k_bytes);
+
+            uint fr = FrMultiply(FrMultiply(uint256(challengeX), truthStageCounter), c);
+            assembleGamma = G1PointAddition(assembleGamma, G1PointScaleMul(gamma[0], fr));
+            assembleYita = G1PointAddition(assembleYita, G1PointScaleMul(yita[0], fr));
+            truthStageCounter+=1;
+
+
+            G1Point [] memory B = new G1Point[](1);
+            G1Point memory a_mul_h = G1PointScaleMul(h, a_[0]);
+            G1Point memory c_mul_yita = G1PointScaleMul(yita[0], FrNegate(c));
+
+            G1Point memory k_mul_gamma = G1PointScaleMul(gamma[0], k_[0]);
+            B[0] = G1PointAddition(G1PointAddition(k_mul_gamma, a_mul_h), c_mul_yita);
+            challengeC = keccak256(abi.encodePacked(challengeC,__calculate_challenge(gamma,yita,1,B)));
         }
-        bytes32 issueKeyHash_cumulative;
-        for(uint i=0;i<worker_number;i++) {
-            issueKeyHash_cumulative = keccak256(abi.encodePacked(issueKeyHash_cumulative, workersIssuesPK[i]));
+    function verifyTruthStage2(string memory truth_url,
+        bytes memory truth_hash,
+        bytes memory sig_enc,
+        uint m,
+        uint k_public,
+        uint c,
+        uint n) public {
+        truthHash = truth_hash;
+        truthUrl = truth_url;
+        cumulateSigHash = keccak256(
+            abi.encodePacked(
+                cumulateSigHash,
+                truth_hash,
+                bytes32(m),
+                bytes32(k_public),
+                bytes32(c),
+                bytes32(n)
+                ));
+        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;
+        check_pairing(assembleGamma, T2(), assembleYita, G2());
+        challengeC = keccak256(abi.encodePacked(challengeC,m));
+        uint256(challengeC) == c;
+    }
+
+    function verifySigStage1(bytes memory _B,
+        bytes memory _Q,
+    bytes memory gamma_byte,
+        bytes memory yita_byte,
+        bytes memory a_bytes,
+        bytes memory k_bytes
+        ) public {
+            BWorker2.push(_B);
+            QWorker2.push(_Q);
+            cumulateSigHash = keccak256(
+                abi.encodePacked(
+                cumulateSigHash,
+                _B,
+                _Q,
+                gamma_byte,
+                yita_byte,
+                a_bytes,
+                k_bytes
+                    ));
         }
-        bytes32 scanKeyHash_cumulative;
-        for(uint i=0;i<worker_number;i++) {
-            scanKeyHash_cumulative = keccak256(abi.encodePacked(scanKeyHash_cumulative, workersScanPK[i]));
-        }
-        return keccak256(abi.encodePacked(solutionHash_cumulative, issueKeyHash_cumulative, scanKeyHash_cumulative));
+
+    function verifySigStage2(string memory truth_url,
+        bytes memory truth_hash,
+        bytes memory sig_enc,
+        uint m,
+        uint k_public,
+        uint c,
+        uint n) public {
+        truthHash = truth_hash;
+        truthUrl = truth_url;
+        cumulateSigHash = keccak256(
+            abi.encodePacked(
+                cumulateSigHash,
+                truth_hash,
+                bytes32(m),
+                bytes32(k_public),
+                bytes32(c),
+                bytes32(n)
+                ));
+        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;
     }
 
     function verifySignature(
@@ -523,7 +662,7 @@ contract AZTEC {
         uint n)  public{
 
         bytes32 program_hash = keccak256(abi.encodePacked(
-                _workerHash(m),
+                _workerHash(),
                 _B,
                 _Q,
                 truth_hash,

@@ -10,14 +10,14 @@ overheads = np.array([
 	[22.9767,13.7731,9.80672,7.61288,6.25628,5.32801,4.60318,4.08318,3.6313,3.32977,3.05911,2.82389,2.59172,2.38719,2.31817,2.07668],
 	# [25.3514,15.2107,10.8285,8.40557,6.92346,5.87597,5.10169,4.49914,4.04977,3.63209,3.35214,3.09592,2.84675,2.62297,2.54837,2.3317],
 	[27.7265,16.6597,11.8476,9.19833,7.55838,6.41852,5.57684,4.90335,4.39261,4.00187,3.63174,3.3676,3.11041,2.85491,2.76976,2.58856]])
-
+marker = ["o","x","^","*","s","v"]
 labels = []
 plt.ylabel("Average dummy words ratio")
 plt.xlabel("Ɛ")
 
-for delta, overhead in zip(deltas, overheads):
+for delta, overhead,m in zip(deltas, overheads,marker):
 	label = "δ = 2^" + str(delta)
-	plt.plot(epsilons, overhead, label = label)
+	plt.plot(epsilons, overhead, label = label,marker = m)
 	labels.append(label)
 plt.legend(labels)
 plt.show()

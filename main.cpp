@@ -27,7 +27,7 @@ int main() {
 
     // test
     int k_public = 0;
-    int n= 20;
+    int n= 2;
     int m = n;
     vector<int>value;
     for(int i=0;i<n;i++) {
