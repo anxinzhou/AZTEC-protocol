@@ -1,7 +1,7 @@
 //
 // Created by anxin on 2020-02-16.
 //
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include <libff/algebra/curves/alt_bn128/alt_bn128_init.hpp>
 #include <libff/algebra/fields/bigint.hpp>
 #include "aztec.h"
 #include <vector>
@@ -13,7 +13,7 @@ using namespace std;
 using namespace libff;
 
 int main() {
-    alt_bn128_pp::init_public_params();
+     libff::alt_bn128_pp::init_public_params();
 //
     cout<<"setup time"<<endl;
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -69,7 +69,7 @@ int main() {
 //            printf("verify success %d\n",i);
         } else {
             printf("verify fail %d", i);
-            exit(-1);
+            return -1;
         }
 
 
