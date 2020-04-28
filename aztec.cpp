@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <iomanip>
 #include <gmp.h>
+#include <algorithm>
 
 using namespace libff;
 using namespace std;
