@@ -22,24 +22,24 @@ contract AZTEC {
     bytes public QWorker;
     string public truthUrl;
     bytes public truthHash;
-
+    
     bytes [] public BWorker2;
     bytes [] public QWorker2;
 
     bytes32 cumulateSigHash;
     bytes32 solutionHashCumulative;
 
-    bytes32 issueKeyHashCumulative;
     bytes32 scanKeyHashCumulative;
-
+    
     G1Point public assembleGamma;
     G1Point public assembleYita;
     uint truthStageCounter = 0;
     bytes32 challengeX;
     bytes32 challengeC;
 
+    
     uint cumulateK1;
-
+    
 
     struct G1Point {
         uint x;
@@ -492,11 +492,10 @@ contract AZTEC {
         RequestorBalance -= reward_sp + reward_workers;
     }
 
-    function registerWorker(bytes calldata scan_pk, bytes calldata issue_pk ) external {
+    function registerWorker(bytes calldata scan_pk) external {
         workersScanPK.push(scan_pk);
-        workersIssuesPK.push(issue_pk);
+        
         scanKeyHashCumulative = keccak256(abi.encodePacked(scanKeyHashCumulative, scan_pk));
-        issueKeyHashCumulative=keccak256(abi.encodePacked(issueKeyHashCumulative, issue_pk));
     }
 
     function registerSP(bytes calldata pk_enclave) external {
@@ -524,20 +523,20 @@ contract AZTEC {
         //     scanKeyHash_cumulative = keccak256(abi.encodePacked(scanKeyHash_cumulative, workersScanPK[i]));
         // }
         // return keccak256(abi.encodePacked(solutionHash_cumulative, issueKeyHash_cumulative, scanKeyHash_cumulative));
-        return keccak256(abi.encodePacked(solutionHashCumulative, issueKeyHashCumulative, scanKeyHashCumulative));
+        return keccak256(abi.encodePacked(solutionHashCumulative, scanKeyHashCumulative));
     }
-
+    
     function verifyTruthChallenge(bytes memory gamma_byte, bytes memory yita_byte, bytes memory k_bytes) public{
         G1Point []memory gamma = parseG1(gamma_byte);
             //
         G1Point []memory yita = parseG1(yita_byte);
         challengeX = keccak256(abi.encodePacked(challengeX ,__calculate_challenge_x(gamma, yita)));
-
+        
         uint [] memory k_ = parseFr(k_bytes);
         cumulateK1 = FrAddition(cumulateK1, FrNegate(k_[0]));
     }
-
-
+    
+    
     function verifyTruthStage1(bytes memory _B,
         bytes memory _Q,
     bytes memory gamma_byte,
@@ -558,24 +557,24 @@ contract AZTEC {
                 a_bytes,
                 k_bytes
                     ));
-
+                    
             G1Point []memory gamma = parseG1(gamma_byte);
             //
-
+    
             G1Point []memory yita = parseG1(yita_byte);
             uint [] memory a_ = parseFr(a_bytes);
             uint [] memory k_ = parseFr(k_bytes);
-
+            
             uint fr = FrMultiply(FrMultiply(uint256(challengeX), truthStageCounter), c);
             assembleGamma = G1PointAddition(assembleGamma, G1PointScaleMul(gamma[0], fr));
             assembleYita = G1PointAddition(assembleYita, G1PointScaleMul(yita[0], fr));
             truthStageCounter+=1;
-
-
+            
+            
             G1Point [] memory B = new G1Point[](1);
             G1Point memory a_mul_h = G1PointScaleMul(h, a_[0]);
             G1Point memory c_mul_yita = G1PointScaleMul(yita[0], FrNegate(c));
-
+       
             G1Point memory k_mul_gamma = G1PointScaleMul(gamma[0], k_[0]);
             B[0] = G1PointAddition(G1PointAddition(k_mul_gamma, a_mul_h), c_mul_yita);
             challengeC = keccak256(abi.encodePacked(challengeC,__calculate_challenge(gamma,yita,1,B)));
@@ -598,12 +597,12 @@ contract AZTEC {
                 bytes32(c),
                 bytes32(n)
                 ));
-        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;
+        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender; 
         check_pairing(assembleGamma, T2(), assembleYita, G2());
         challengeC = keccak256(abi.encodePacked(challengeC,m));
         uint256(challengeC) == c;
-    }
-
+    } 
+    
     function verifySigStage1(bytes memory _B,
         bytes memory _Q,
     bytes memory gamma_byte,
@@ -624,7 +623,7 @@ contract AZTEC {
                 k_bytes
                     ));
         }
-
+        
     function verifySigStage2(string memory truth_url,
         bytes memory truth_hash,
         bytes memory sig_enc,
@@ -643,9 +642,9 @@ contract AZTEC {
                 bytes32(c),
                 bytes32(n)
                 ));
-        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;
-    }
-
+        ecrecover(cumulateSigHash, 28, 0x9242685bf161793cc25603c231bc2f568eb630ea16aa137d2664ac8038825608, 0x4f8ae3bd7535248d0bd448298cc2e2071e56992d0774dc340c368ae950852ada) == msg.sender;        
+    } 
+    
     function verifySignature(
         bytes memory _B,
         bytes memory _Q,
